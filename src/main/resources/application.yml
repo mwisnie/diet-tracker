@@ -1,0 +1,11 @@
+### actuator ###
+management:
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: health,info,mappings,env # TODO: secure or remove env, mappings
+
+info.app.name: Diet Tracker Backend
+info.app.description: REST API for Diet Tracker App
+info.app.version: 0.1
