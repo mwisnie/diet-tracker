@@ -5,10 +5,16 @@ server:
 
 ### security ###
 authentication:
-  memory:
-    enabled: true
-  jwt:
-    enabled: false
+  type:
+    cookie:
+      enabled: true
+    jwt:
+      enabled: false
+  provider:
+    memory:
+      enabled: true
+    custom-dao:
+      enabled: false
 
 
 ### actuator ###

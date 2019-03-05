@@ -12,6 +12,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -24,14 +28,29 @@ public class WebSecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
 
+    @Bean
+    public AuthenticationFailureHandler restFailureHandler() {
+        return new SimpleUrlAuthenticationFailureHandler();
+    }
 
 
-    @ConditionalOnProperty("authentication.memory.enabled")
+
+    @ConditionalOnProperty("authentication.type.cookie.enabled")
     @Configuration
-    public static class InMemorySecurityConfiguration extends WebSecurityConfigurerAdapter {
+    @RequiredArgsConstructor(onConstructor = @__(@Autowired))
+    public static class CookieSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         @Autowired
         private PasswordEncoder encoder;
+
+        @Autowired
+        private AuthenticationEntryPoint restAuthenticationEntryPoint;
+
+        @Autowired
+        private AuthenticationSuccessHandler restAuthenticationSuccessHandler;
+
+        @Autowired
+        private AuthenticationFailureHandler restFailureHandler;
 
         @Override
         public void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -43,17 +62,32 @@ public class WebSecurityConfiguration {
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
-            http.authorizeRequests()
-                    .antMatchers("/api/**").hasAnyRole("USER", "ADMIN")
-                    .antMatchers("/status/**").permitAll();
+            http.csrf()
+                    .disable()
+                .exceptionHandling()
+                    .authenticationEntryPoint(restAuthenticationEntryPoint)
+                .and()
+                .authorizeRequests()
+                    .antMatchers("/api/**").authenticated()
+                    .antMatchers("/admin/**").hasRole("ADMIN")
+                    .antMatchers("/manage/**").permitAll()
+                .and()
+                .formLogin()
+                    .successHandler(restAuthenticationSuccessHandler)
+                    .failureHandler(restFailureHandler)
+                .and()
+                    .logout();
         }
     }
 
 
 
-    @ConditionalOnProperty("authentication.jwt.enabled")
+
+    @ConditionalOnProperty("authentication.type.jwt.enabled")
     @Configuration
-    public static class JwtConfiguration extends WebSecurityConfigurerAdapter {
+    public static class JwtSecurityConfiguration extends WebSecurityConfigurerAdapter {
+
+        //TODO - jwt security
 
         @Autowired
         private PasswordEncoder encoder;
@@ -66,5 +100,7 @@ public class WebSecurityConfiguration {
         protected void configure(HttpSecurity http) throws Exception {
         }
     }
+
+
 
 }
