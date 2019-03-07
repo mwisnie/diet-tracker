@@ -33,9 +33,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.1.2.RELEASE'
 
+	// jwt
+	compile group: 'io.jsonwebtoken', name: 'jjwt', version: '0.6.0'
+
 	// persistence
 	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
-//	runtimeOnly 'com.h2database:h2'
 
 	// test
 	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.5', ext: 'pom'
