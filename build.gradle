@@ -10,7 +10,12 @@ buildscript {
 	}
 }
 
+plugins {
+	id 'io.franzbecker.gradle-lombok' version '2.0'
+}
+
 apply plugin: 'java'
+apply plugin: 'groovy'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
@@ -26,7 +31,18 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
-	runtimeOnly 'com.h2database:h2'
+	compile group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.1.2.RELEASE'
+
+	// persistence
+	compile group: 'org.postgresql', name: 'postgresql', version: '42.2.5'
+//	runtimeOnly 'com.h2database:h2'
+
+	// test
+	compile group: 'org.codehaus.groovy', name: 'groovy-all', version: '2.5.5', ext: 'pom'
+	testCompile group: 'org.spockframework', name: 'spock-core', version: '1.2-groovy-2.5'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// utility
+	compileOnly 'org.projectlombok:lombok:1.18.4'
+	runtimeOnly 'org.springframework.boot:spring-boot-devtools'
 }
