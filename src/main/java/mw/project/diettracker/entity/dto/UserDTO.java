@@ -12,7 +12,7 @@ public class UserDTO {
 
     @NotNull
     @NotEmpty
-    private String name;
+    private String username;
 
     @NotNull
     @NotEmpty
@@ -23,7 +23,7 @@ public class UserDTO {
     private String matchingPassword;
 
     private String email;
-
+    private Boolean enabled;
     private Boolean resetPassword;
 
 }

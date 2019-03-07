@@ -5,6 +5,7 @@ import mw.project.diettracker.entity.User;
 import mw.project.diettracker.entity.dto.UserDTO;
 import mw.project.diettracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,7 +16,10 @@ import java.util.stream.Collectors;
 public class UserService {
 
     @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
+
+    @Autowired
+    private final PasswordEncoder passwordEncoder;
 
     // TODO: has role admin
     public List<UserDTO> getAllUsers() {
@@ -34,8 +38,8 @@ public class UserService {
         // emit registration event
 
         User user = User.builder()
-                        .name(dto.getName())
-                        .password(dto.getPassword())
+                        .username(dto.getUsername())
+                        .password(passwordEncoder.encode(dto.getPassword()))
                         .email(dto.getEmail())
                         .build();
 
@@ -63,7 +67,7 @@ public class UserService {
 
     private UserDTO buildUserDTO(User user) {
         return UserDTO.builder()
-                    .name(user.getName())
+                    .username(user.getUsername())
                     .email(user.getEmail())
                     .build();
     }

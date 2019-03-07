@@ -2,15 +2,18 @@ package mw.project.diettracker.security;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
@@ -25,7 +28,8 @@ public class WebSecurityConfiguration {
 
     @Bean
     public PasswordEncoder encoder() {
-        return new BCryptPasswordEncoder();
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+//        return new BCryptPasswordEncoder();
     }
 
     @Bean
@@ -41,23 +45,43 @@ public class WebSecurityConfiguration {
     public static class CookieSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         @Autowired
-        private PasswordEncoder encoder;
+        private final PasswordEncoder encoder;
 
         @Autowired
-        private AuthenticationEntryPoint restAuthenticationEntryPoint;
+        private final AuthenticationEntryPoint restAuthenticationEntryPoint;
 
         @Autowired
-        private AuthenticationSuccessHandler restAuthenticationSuccessHandler;
+        private final AuthenticationSuccessHandler restAuthenticationSuccessHandler;
 
         @Autowired
-        private AuthenticationFailureHandler restFailureHandler;
+        private final AuthenticationFailureHandler restFailureHandler;
+
+        @Autowired
+        private final UserDetailsService customUserDetailsService;
+
+        @Value("${authentication.provider.custom-dao.enabled}")
+        private Boolean customDaoEnabled;
+
+        @Value("${authentication.provider.memory.enabled}")
+        private Boolean inMemoryEnabled;
 
         @Override
         public void configure(AuthenticationManagerBuilder auth) throws Exception {
-            auth.inMemoryAuthentication()
-                    .withUser("user").password(encoder.encode("user")).roles("USER")
-                    .and()
-                    .withUser("admin").password(encoder.encode("admin")).roles("ADMIN");
+            if (customDaoEnabled) {
+                DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+                authenticationProvider.setPasswordEncoder(encoder);
+                System.out.println(encoder);
+                authenticationProvider.setUserDetailsService(customUserDetailsService);
+                auth.authenticationProvider(authenticationProvider);
+
+            } else if (inMemoryEnabled) {
+                auth.inMemoryAuthentication()
+                        .withUser("user").password(encoder.encode("user")).roles("USER")
+                        .and()
+                        .withUser("admin").password(encoder.encode("admin")).roles("ADMIN");
+            } else {
+                throw new RuntimeException("Could not establish authentication provider - bad configuration");
+            }
         }
 
         @Override
@@ -85,6 +109,7 @@ public class WebSecurityConfiguration {
 
     @ConditionalOnProperty("authentication.type.jwt.enabled")
     @Configuration
+    @RequiredArgsConstructor(onConstructor = @__(@Autowired))
     public static class JwtSecurityConfiguration extends WebSecurityConfigurerAdapter {
 
         //TODO - jwt security
@@ -92,8 +117,18 @@ public class WebSecurityConfiguration {
         @Autowired
         private PasswordEncoder encoder;
 
+        @Autowired
+        private UserDetailsService customUserDetailsService;
+
+
+
         @Override
         public void configure(AuthenticationManagerBuilder auth) throws Exception {
+            DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+            authenticationProvider.setPasswordEncoder(encoder);
+            authenticationProvider.setUserDetailsService(customUserDetailsService);
+
+            auth.authenticationProvider(authenticationProvider);
         }
 
         @Override
