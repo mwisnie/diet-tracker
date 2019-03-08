@@ -16,11 +16,12 @@ spring:
 ### security ###
 authentication:
   type:
-    cookie.enabled: true
-    jwt.enabled: false
+    cookie.enabled: false
+    jwt.enabled: true
   provider:
     memory.enabled: false
     custom-dao.enabled: true
+  jwt-secret:
 
 ### actuator ###
 management:
